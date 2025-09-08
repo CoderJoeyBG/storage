@@ -26,30 +26,20 @@
 </main>
 
 <script>
-// List of file types
-const fileTypes = ['pdf', 'png', 'jpg', 'mp3', 'txt', 'docx'];
-
-// Function to generate random AI-style file names
-function generateFileName() {
-    const adjectives = ['Bright', 'Quantum', 'Silent', 'Digital', 'Virtual', 'Infinite', 'Crystal', 'Neon'];
-    const nouns = ['Report', 'Image', 'Sound', 'Document', 'Note', 'Project', 'File', 'Data'];
-    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const noun = nouns[Math.floor(Math.random() * nouns.length)];
-    const number = Math.floor(Math.random() * 1000);
-    const extension = fileTypes[Math.floor(Math.random() * fileTypes.length)];
-    return `${adjective}_${noun}_${number}.${extension}`;
-}
-
-// Generate 10 random files
-const fileList = document.getElementById('fileList');
-for (let i = 0; i < 10; i++) {
-    const fileName = generateFileName();
-    const li = document.createElement('li');
-    li.className = 'file-item';
-    li.innerHTML = `<span class="file-name">${fileName}</span>
-                    <a href="files/${fileName}" download class="download-btn">Download</a>`;
-    fileList.appendChild(li);
-}
+// Fetch the file list from files.json
+fetch('files.json')
+    .then(res => res.json())
+    .then(files => {
+        const fileList = document.getElementById('fileList');
+        files.forEach(fileName => {
+            const li = document.createElement('li');
+            li.className = 'file-item';
+            li.innerHTML = `<span class="file-name">${fileName}</span>
+                            <a href="files/${fileName}" download class="download-btn">Download</a>`;
+            fileList.appendChild(li);
+        });
+    })
+    .catch(err => console.error('Error loading file list:', err));
 </script>
 </body>
 </html>
