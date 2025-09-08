@@ -3,99 +3,171 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FS</title>
+<title>FS - File Manager</title>
 <style>
-    /* Base styles */
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: #f9f9f9;
-        margin: 0;
-        padding: 0;
-        color: #333;
-    }
+/* ===== Base Styles ===== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
 
-    header {
-        background: #fff;
-        text-align: center;
-        padding: 30px 20px;
-        font-size: 26px;
-        font-weight: 600;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
+header {
+    background: #1e88e5;
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
-    main {
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 0 20px;
-    }
+/* ===== Main Content ===== */
+main {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
 
+.file-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 0;
+    list-style: none;
+}
+
+/* ===== File Item ===== */
+.file-item {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 15px 25px 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-item:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* ===== File Name ===== */
+.file-name {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    word-break: break-word;
+}
+
+/* ===== File Type Badge ===== */
+.file-type {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-transform: uppercase;
+}
+
+/* File type colors */
+.file-type.pdf { background: #e74c3c; }
+.file-type.docx { background: #3498db; }
+.file-type.xlsx { background: #27ae60; }
+.file-type.png, .file-type.jpg, .file-type.jpeg, .file-type.gif { background: #f39c12; }
+.file-type.zip { background: #9b59b6; }
+.file-type.exe { background: #e67e22; }
+.file-type.txt { background: #7f8c8d; }
+.file-type.default { background: #95a5a6; }
+
+/* ===== Download Button ===== */
+.download-btn {
+    background: #1e88e5;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.download-btn:hover {
+    background: #1565c0;
+    transform: translateY(-2px);
+}
+
+/* ===== File Icons ===== */
+.file-type svg {
+    width: 14px;
+    height: 14px;
+    fill: white;
+}
+
+/* ===== Responsive ===== */
+@media(max-width: 600px){
     .file-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 20px;
-        padding: 0;
-        list-style: none;
+        grid-template-columns: 1fr;
     }
-
-    .file-item {
-        background: #fff;
-        border-radius: 12px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .file-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .file-name {
-        font-size: 16px;
-        margin-bottom: 15px;
-        word-break: break-word;
-    }
-
-    .download-btn {
-        background: #4a90e2;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 8px;
-        text-align: center;
-        text-decoration: none;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.15s;
-    }
-
-    .download-btn:hover {
-        background: #357ab8;
-    }
+}
 </style>
 </head>
 <body>
 
-<header>FS</header>
+<header>FS - File Manager</header>
 
 <main>
     <ul class="file-list" id="fileList"></ul>
 </main>
 
 <script>
-// Fetch the file list from files.json
+// File type icons (SVG)
+const icons = {
+    pdf: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
+    docx: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
+    xlsx: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
+    png: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
+    jpg: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
+    jpeg: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
+    gif: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
+    zip: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
+    exe: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
+    txt: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
+    default: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`
+};
+
+// Utility to get file type
+function getFileType(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    return icons[ext] ? ext : 'default';
+}
+
+// Fetch file list
 fetch('files.json')
     .then(res => res.json())
     .then(files => {
         const fileList = document.getElementById('fileList');
         files.forEach(fileName => {
+            const type = getFileType(fileName);
             const li = document.createElement('li');
             li.className = 'file-item';
             li.innerHTML = `
                 <span class="file-name">${fileName}</span>
+                <span class="file-type ${type}">${icons[type]} ${type.toUpperCase()}</span>
                 <a href="files/${fileName}" download class="download-btn">Download</a>
             `;
             fileList.appendChild(li);
