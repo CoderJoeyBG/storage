@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FS - File Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
 /* ===== Base Styles ===== */
 body {
@@ -12,26 +14,94 @@ body {
     margin: 0;
     padding: 0;
     color: #333;
+    display: flex;
+    min-height: 100vh;
 }
 
-header {
+/* ===== Sidebar ===== */
+aside {
+    width: 250px;
     background: #1e88e5;
     color: white;
-    text-align: center;
-    padding: 30px 20px;
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.1);
+}
+aside h2 {
+    font-size: 22px;
+    margin: 0 0 15px;
+}
+aside nav a {
+    display: block;
+    padding: 10px 0;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+aside nav a:hover {
+    opacity: 0.8;
+}
+aside .auths {
+    margin-top: 40px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+.auths code {
+    display: block;
+    background: rgba(255,255,255,0.1);
+    padding: 5px;
+    border-radius: 6px;
+    margin-top: 5px;
+    word-break: break-all;
 }
 
 /* ===== Main Content ===== */
 main {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 0 20px;
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
 }
 
+header {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #1e88e5;
+}
+
+/* ===== Controls ===== */
+.controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+button, input[type="url"] {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+button {
+    background: #1e88e5;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+button:hover {
+    background: #1565c0;
+}
+input[type="url"] {
+    flex: 1;
+    border: 1px solid #ccc;
+}
+
+/* ===== File List ===== */
 .file-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -52,21 +122,16 @@ main {
     position: relative;
     transition: transform 0.2s, box-shadow 0.2s;
 }
-
 .file-item:hover {
     transform: translateY(-6px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.12);
 }
-
-/* ===== File Name ===== */
 .file-name {
     font-size: 16px;
     font-weight: 500;
     margin-bottom: 15px;
     word-break: break-word;
 }
-
-/* ===== File Type Badge ===== */
 .file-type {
     position: absolute;
     top: 15px;
@@ -81,18 +146,6 @@ main {
     gap: 5px;
     text-transform: uppercase;
 }
-
-/* File type colors */
-.file-type.pdf { background: #e74c3c; }
-.file-type.docx { background: #3498db; }
-.file-type.xlsx { background: #27ae60; }
-.file-type.png, .file-type.jpg, .file-type.jpeg, .file-type.gif { background: #f39c12; }
-.file-type.zip { background: #9b59b6; }
-.file-type.exe { background: #e67e22; }
-.file-type.txt { background: #7f8c8d; }
-.file-type.default { background: #95a5a6; }
-
-/* ===== Download Button ===== */
 .download-btn {
     background: #1e88e5;
     color: white;
@@ -105,75 +158,128 @@ main {
     cursor: pointer;
     transition: background 0.2s, transform 0.15s;
 }
-
 .download-btn:hover {
     background: #1565c0;
     transform: translateY(-2px);
 }
 
-/* ===== File Icons ===== */
-.file-type svg {
-    width: 14px;
-    height: 14px;
-    fill: white;
-}
-
-/* ===== Responsive ===== */
-@media(max-width: 600px){
-    .file-list {
-        grid-template-columns: 1fr;
-    }
-}
+/* File type colors */
+.file-type.pdf { background: #e74c3c; }
+.file-type.docx { background: #3498db; }
+.file-type.xlsx { background: #27ae60; }
+.file-type.png, .file-type.jpg, .file-type.jpeg, .file-type.gif { background: #f39c12; }
+.file-type.zip { background: #9b59b6; }
+.file-type.exe { background: #e67e22; }
+.file-type.txt { background: #7f8c8d; }
+.file-type.default { background: #95a5a6; }
 </style>
 </head>
 <body>
 
-<header>FS - File Manager</header>
+<aside>
+    <div>
+        <h2>FS</h2>
+        <nav>
+            <a href="#">Files</a>
+            <a href="#">Upload</a>
+        </nav>
+    </div>
+    <div class="auths">
+        <strong>Auths</strong>
+        <code>3547348325008864</code>
+    </div>
+</aside>
 
 <main>
+    <header>File Manager</header>
+
+    <div class="controls">
+        <button id="downloadAll">⬇ Download All</button>
+        <input type="url" id="directUrl" placeholder="Paste direct download link...">
+        <button id="addLink">+ Add Link</button>
+    </div>
+
     <ul class="file-list" id="fileList"></ul>
 </main>
 
 <script>
-// File type icons (SVG)
+// File type icons
 const icons = {
     pdf: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
     docx: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
     xlsx: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
-    png: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
-    jpg: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
-    jpeg: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
-    gif: `<svg viewBox="0 0 24 24"><path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/></svg>`,
-    zip: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
-    exe: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
-    txt: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`,
     default: `<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg>`
 };
 
-// Utility to get file type
+// File cache
+let fileCache = [];
+
+// Get file type by extension
 function getFileType(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
     return icons[ext] ? ext : 'default';
 }
 
-// Fetch file list
+// Render file card
+function renderFile(fileName, urlOverride = null) {
+    const type = getFileType(fileName);
+    const li = document.createElement('li');
+    li.className = 'file-item';
+    li.innerHTML = `
+        <span class="file-name">${fileName}</span>
+        <span class="file-type ${type}">${icons[type]} ${type.toUpperCase()}</span>
+        <a href="${urlOverride || "files/" + fileName}" class="download-btn" target="_blank">Download</a>
+    `;
+    document.getElementById('fileList').appendChild(li);
+}
+
+// Load local files
 fetch('files.json')
     .then(res => res.json())
     .then(files => {
-        const fileList = document.getElementById('fileList');
-        files.forEach(fileName => {
-            const type = getFileType(fileName);
-            const li = document.createElement('li');
-            li.className = 'file-item';
-            li.innerHTML = `
-                <span class="file-name">${fileName}</span>
-                <span class="file-type ${type}">${icons[type]} ${type.toUpperCase()}</span>
-                <a href="files/${fileName}" download class="download-btn">Download</a>
-            `;
-            fileList.appendChild(li);
-        });
+        fileCache = files;
+        files.forEach(renderFile);
     })
     .catch(err => console.error('Error loading file list:', err));
+
+// Load external links
+fetch('links.json')
+    .then(res => res.json())
+    .then(links => {
+        links.forEach(link => {
+            const fileName = link.split('/').pop().split('?')[0] || "download";
+            renderFile(fileName, link);
+        });
+    })
+    .catch(err => console.error('Error loading links:', err));
+
+// Download all as ZIP (only local files, not external links)
+document.getElementById('downloadAll').addEventListener('click', async () => {
+    if (!fileCache.length) return alert("No local files to download.");
+    const zip = new JSZip();
+    for (const fileName of fileCache) {
+        const url = `files/${fileName}`;
+        try {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            zip.file(fileName, blob);
+        } catch {
+            console.warn("Failed to fetch " + fileName);
+        }
+    }
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "all_files.zip");
+});
+
+// Add direct link manually
+document.getElementById('addLink').addEventListener('click', () => {
+    const input = document.getElementById('directUrl');
+    if (!input.value) return;
+    const url = input.value;
+    const fileName = url.split('/').pop().split('?')[0] || "download";
+    renderFile(fileName, url);
+    input.value = "";
+});
 </script>
 
 </body>
